@@ -170,7 +170,9 @@ model_prepare.RxODE <- function(model, times, regimen=data.frame(TIME=numeric())
   }
 
   ## Make sure that all model input is defined now
-  i <- modVars$params %in% c(names(parameters), colnames(ev))
+  rxParams <- modVars$params
+  rxParams <- rxParams[!(rxParams %in% "TIME")] # TIME in RxODE model is dataset time
+  i <- rxParams %in% c(names(parameters), colnames(ev))
   if( any(!i) ) {
     stop("Model parameter(s) ", paste(modVars$params[!i], collapse=", "), " is missing.")
   }

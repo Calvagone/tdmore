@@ -79,9 +79,11 @@ checkModel <- function(tdmore) {
   if (inherits(model, "RxODE")) {
     # Check that parameters + covariates together supplies the parameters needed for the model
     modVars <- model$get.modelVars()
-    if(is.null(parameters)) parameters <- modVars$params
-    if(is.null(covariates)) covariates <- modVars$params[ ! modVars$params %in% parameters ] #the rest
-    if(!isTRUE(all.equal( sort(c(parameters, covariates)), sort(modVars$params)))) stop("Inconsistent model, some covariates seem to be missing")
+    rxParams <- modVars$params
+    rxParams <- rxParams[!(rxParams %in% "TIME")] # TIME in RxODE model is dataset time
+    if(is.null(parameters)) parameters <- rxParams
+    if(is.null(covariates)) covariates <- rxParams[ ! rxParams %in% parameters ] #the rest
+    if(!isTRUE(all.equal( sort(c(parameters, covariates)), sort(rxParams)))) stop("Inconsistent model, some covariates seem to be missing")
   }
 
   tdmore$parameters <- parameters
