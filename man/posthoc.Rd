@@ -63,6 +63,7 @@ The next fit will use two observations.
 And so on.
 
 Please note that ipred incorporates all time-varying covariates, even if these may be considered to be "in the future".
+The 'par' argument in dataTibble can optionally be a list, with a starting value for each iteration.
 }
 
 \examples{

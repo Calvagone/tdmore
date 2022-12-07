@@ -28,7 +28,7 @@ LazyData: true
 Suggests: progress, callr, knitr, rmarkdown, testthat, devtools, vdiffr, svglite, rprojroot,
  pkgdown, bookdown, miniUI, shiny, readr, stringr, tidyr (>= 1.0.0), shinytest, withr,
  benchmarkme, microbenchmark, plotly, MCMCpack, mnormt, gridExtra, mvnfast
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 VignetteBuilder: knitr
 URL: https://github.com/tdmore-dev/tdmore, https://tdmore-dev.github.io/tdmore/
 BugReports: https://github.com/tdmore-dev/tdmore/issues
