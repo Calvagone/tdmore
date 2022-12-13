@@ -19,7 +19,7 @@ Description: tdmore is a research tool to investigate precision dosing.
   dosing regimen can be implemented as precision dosing, allowing you to compare 
   performance versus classical techniques.
 Depends: R (>= 3.5.0)
-Imports: dplyr, stats, RxODE (>= 0.9.0), nlmixr (>= 1.1.0-9), ggplot2 (>= 3.0.0), magrittr,
+Imports: dplyr, stats, RxODE (>= 0.9.0), ggplot2 (>= 3.0.0), magrittr,
   zoo, rlang, purrr, Matrix, mvtnorm, data.table, optimr, optextras, tibble, R6, roxygen2
 License: AGPL-3
 Encoding: UTF-8
