@@ -207,7 +207,7 @@ modifyMantissa <- function(x, a=-2^-52) {
 #' value is lower than the treatment TIME)
 #'
 #' @return a numeric vector with the corresponding troughs
-#' @engine
+#' @export
 getTroughs <- function(model, regimen, deltamin=1/4, deltaplus=1/4, adj=TRUE) {
   stopifnot( "FORM" %in% colnames(regimen) )
   regimen$II <- getDosingInterval(regimen$FORM, model)
