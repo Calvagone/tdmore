@@ -2,6 +2,7 @@
 % Please edit documentation in R/optimize.R, R/proseval.R
 \name{findDose}
 \alias{findDose}
+\alias{getTroughs}
 \alias{findDoses}
 \alias{doseSimulation}
 \title{Simulate dose adaptation in a population}
@@ -17,6 +18,8 @@ findDose(
   mc.maxpts = 100,
   ...
 )
+
+getTroughs(model, regimen, deltamin = 1/4, deltaplus = 1/4, adj = TRUE)
 
 findDoses(fit, regimen = fit$regimen, targetMetadata = NULL)
 
@@ -51,6 +54,18 @@ doseSimulation(
 
 \item{...}{passed to `posthoc`}
 
+\item{model}{tdmore model with formulation metadata}
+
+\item{deltamin}{how much can we move the trough back to match an existing treatment time? in percentage of interdose-interval}
+
+\item{deltaplus}{how much can we move the trough forward to match an existing treatment time? in percentage of interdose-interval
+This method emits an error if any other treatment is found in the interval between `time` and `time+ii*(1-deltamin)`}
+
+\item{adj}{some prediction models will display the peak rather than the trough if we use the exact treatment time.
+To counteract this, we subtract an infitisemal small number. Specify an actual number,
+or specify TRUE to subtract a single bit from the mantissa (the lowest theoretical amount to ensure the returned
+value is lower than the treatment TIME)}
+
 \item{targetMetadata}{defined target troughs as list(min=X, max=Y). If NULL or all NA, taken from the model metadata.}
 
 \item{x}{tibble with at least a `fit` column}
@@ -74,6 +89,8 @@ with that name, storing the fit}
 }
 \value{
 a recommendation object
+
+a numeric vector with the corresponding troughs
 }
 \description{
 Simulate dose adaptation in a population
@@ -100,6 +117,8 @@ The DoseSimulation iterates as follows:
 \section{Functions}{
 \itemize{
 \item \code{findDose}: Find the dose required to hit a target.
+
+\item \code{getTroughs}: Automatically guesses the target troughs for a given regimen
 
 \item \code{findDoses}: Optimize the regimen, using the metadata defined by the model
 
