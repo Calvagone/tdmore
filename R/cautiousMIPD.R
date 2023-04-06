@@ -82,23 +82,38 @@ updateRegimen <- function(regimen, doseRows = NULL, newDose) {
 #' @param targetMetadata defined target troughs as list(min=X, max=Y). If NULL or all NA, taken from the model metadata.
 #'
 #' @export
-findDosesWithCaution <- function(fit, regimen=fit$regimen, targetMetadata=NULL) {
+findDosesWithCaution <- function(fit, regimen=fit$regimen, targetMetadata=NULL, smoother=NULL) {
   if(! "FIX" %in% colnames(regimen) ) regimen$FIX <- FALSE
   if(is.null(targetMetadata) || all(is.na(targetMetadata))) {
     targetMetadata <- tdmore::getMetadataByClass(fit$tdmore, "tdmore_target")
     if(is.null(targetMetadata)) stop("No target defined in model metadata")
   }
   stopifnot( all( c("min", "max") %in% names(targetMetadata) ) )
+  stopifnot( is.integer(smoother) && smoother > 0L )
 
-  rowNumber <- regimen %>%
+  # Unfixed part of regimen
+  unfixedRegimen <- regimen %>%
     dplyr::mutate(ROW_NO=dplyr::row_number()) %>%
-    dplyr::filter(!FIX) %>%
-    dplyr::filter(OCC==OCC[1]) %>%
-    dplyr::pull(ROW_NO) %>% dplyr::last()
+    dplyr::filter(!FIX)
 
-  target <- list(
-    TIME=getTroughs(fit$tdmore, regimen[rowNumber, ], adj=TRUE)
-  )
+  if (nrow(unfixedRegimen) > 0) {
+    currentOcc <- unfixedRegimen %>% dplyr::pull(OCC) %>% dplyr::first()
+    occasions <- unfixedRegimen$OCC
+    # Find latest occasion available from data
+    for (occ in (((0:smoother) + currentOcc) %>% rev())) {
+      if (occ %in% occasions) break
+    }
+    rowNumber <- unfixedRegimen %>%
+      dplyr::filter(OCC==occ) %>%
+      dplyr::pull(ROW_NO) %>% dplyr::last()
+    target <- list(
+      TIME=getTroughs(fit$tdmore, regimen[rowNumber, ], adj=TRUE)
+    )
+  } else {
+    target <- list(
+      TIME=numeric(0)
+    )
+  }
 
   outputVar <- fit$tdmore$res_var[[1]]$var
   targetValue <- mean( c(targetMetadata$min, targetMetadata$max) )
