@@ -89,7 +89,7 @@ findDosesWithCaution <- function(fit, regimen=fit$regimen, targetMetadata=NULL, 
     if(is.null(targetMetadata)) stop("No target defined in model metadata")
   }
   stopifnot( all( c("min", "max") %in% names(targetMetadata) ) )
-  stopifnot( is.integer(smoother) && smoother > 0L )
+  stopifnot( is.integer(smoother) && smoother >= 0L )
 
   # Unfixed part of regimen
   unfixedRegimen <- regimen %>%
@@ -135,7 +135,12 @@ findDosesWithCaution <- function(fit, regimen=fit$regimen, targetMetadata=NULL, 
       form <- tdmore::getMetadataByName(fit$tdmore, form)
       form$round_function(amt)
     })
-    regimen$AMT[iterationRows] <- roundedAmt[iterationRows] #rounded amounts only
+    iRoundedAmt <- roundedAmt[iterationRows] #rounded amounts only
+    maxAmount <- 20000*(smoother + 1)
+    if (sum(iRoundedAmt) > maxAmount) {
+      iRoundedAmt <- rep(maxAmount/(iRoundedAmt %>% length()), iRoundedAmt %>% length())
+    }
+    regimen$AMT[iterationRows] <- iRoundedAmt
     modified[ iterationRows ] <- TRUE
     result <- c( result, rec$result )
   }

@@ -18,7 +18,12 @@ findDoseCautiously(
   ...
 )
 
-findDosesWithCaution(fit, regimen = fit$regimen, targetMetadata = NULL)
+findDosesWithCaution(
+  fit,
+  regimen = fit$regimen,
+  targetMetadata = NULL,
+  smoother = NULL
+)
 
 findDose(
   fit,
