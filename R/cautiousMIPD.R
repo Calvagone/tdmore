@@ -17,6 +17,7 @@ findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL) {
   stopifnot( all( c("min", "max") %in% names(targetMetadata) ) )
   # stopifnot( is.integer(smoother) && smoother >= 0L )
 
+  doseCap <- 9000
   obsConc <- fit$observed$CONC
 
   # Retrieving the last observed concentration
@@ -70,20 +71,21 @@ findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL) {
     rec <- findDose(fit, regimen, iterationRows, target=row)
     regimen <- rec$regimen
     roundedAmt <- purrr::pmap_dbl(list(regimen$AMT, regimen$FORM), function(amt, form) {
-      form <- tdmore::getMetadataByName(fit$tdmore, form)
-      form$round_function(amt)
-    })
-    iRoundedAmt <- roundedAmt[iterationRows] # Rounded amounts only
-
-    # Capped dose when smoother is used (max 20mg/occasion)
-    # Number of occasions = smoother + 1
-    if (!is.null(smoother)) {
-      maxAmount <- 20000*(smoother + 1)
-      if (sum(iRoundedAmt) > maxAmount) {
-        iRoundedAmt <- rep(maxAmount/(iRoundedAmt %>% length()), iRoundedAmt %>% length())
+      formulation <- tdmore::getMetadataByName(fit$tdmore, form)
+      if (form %in% c("3")) {
+        doseCap_ <- doseCap*2
+      } else if (form %in% c("1", "2", "4")) {
+        doseCap_ <- doseCap
+      } else {
+        stop("formulation must be 1, 2, 3 or 4")
       }
-    }
-    regimen$AMT[iterationRows] <- iRoundedAmt
+      retValue <- formulation$round_function(amt)
+      if (retValue > doseCap_) {
+        retValue <- doseCap_
+      }
+      return(retValue)
+    })
+    regimen$AMT[iterationRows] <- roundedAmt[iterationRows] # Rounded amounts only
     modified[ iterationRows ] <- TRUE
     result <- c( result, rec$result )
   }
