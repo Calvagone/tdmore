@@ -23,7 +23,7 @@ Create a new output object.
 }
 \seealso{
 Other metadata: 
-\code{\link{covariate}()},
+\code{\link{covariate}},
 \code{\link{formulation}()},
 \code{\link{getDosingInterval}()},
 \code{\link{getMetadataByClass}()},

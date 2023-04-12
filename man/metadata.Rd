@@ -19,7 +19,7 @@ Append metadata to a TDMore model
 }
 \seealso{
 Other metadata: 
-\code{\link{covariate}()},
+\code{\link{covariate}},
 \code{\link{formulation}()},
 \code{\link{getDosingInterval}()},
 \code{\link{getMetadataByClass}()},

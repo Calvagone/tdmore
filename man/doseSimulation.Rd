@@ -2,7 +2,7 @@
 % Please edit documentation in R/cautiousMIPD.R, R/optimize.R, R/proseval.R
 \name{findDoseCautiously}
 \alias{findDoseCautiously}
-\alias{findDosesWithCaution}
+\alias{findDosesCautiously}
 \alias{findDose}
 \alias{getTroughs}
 \alias{findDoses}
@@ -18,7 +18,7 @@ findDoseCautiously(
   ...
 )
 
-findDosesWithCaution(
+findDosesCautiously(
   fit,
   regimen = fit$regimen,
   targetMetadata = NULL,
@@ -138,7 +138,7 @@ The DoseSimulation iterates as follows:
 \itemize{
 \item \code{findDoseCautiously}: Find the dose required to hit a target.
 
-\item \code{findDosesWithCaution}: Optimize the regimen, using the metadata defined by the model
+\item \code{findDosesCautiously}: Optimize the regimen, using the metadata defined by the model
 
 This performs a step-wise optimization of multiple doses.
 

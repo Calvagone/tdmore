@@ -82,7 +82,7 @@ updateRegimen <- function(regimen, doseRows = NULL, newDose) {
 #' @param targetMetadata defined target troughs as list(min=X, max=Y). If NULL or all NA, taken from the model metadata.
 #'
 #' @export
-findDosesWithCaution <- function(fit, regimen=fit$regimen, targetMetadata=NULL, smoother=NULL) {
+findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, smoother=NULL) {
   if(! "FIX" %in% colnames(regimen) ) regimen$FIX <- FALSE
   if(is.null(targetMetadata) || all(is.na(targetMetadata))) {
     targetMetadata <- tdmore::getMetadataByClass(fit$tdmore, "tdmore_target")
@@ -90,6 +90,17 @@ findDosesWithCaution <- function(fit, regimen=fit$regimen, targetMetadata=NULL, 
   }
   stopifnot( all( c("min", "max") %in% names(targetMetadata) ) )
   stopifnot( is.integer(smoother) && smoother >= 0L )
+
+  obsConc <- fit$observed$CONC
+
+  # Retrieving the last observed concentration
+  lastConc <- obsConc[obsConc %>% length()]
+
+  if (lastConc < 12.5) {
+    smoother <- 1L
+  } else {
+    smoother <- 0L
+  }
 
   # Unfixed part of regimen
   unfixedRegimen <- regimen %>%
