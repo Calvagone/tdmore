@@ -1,4 +1,33 @@
 
+isAdvagraf <- function(form) {
+  if (form %in% c("3")) {
+    return(TRUE)
+  } else if (form %in% c("1", "2", "4")) {
+    return(FALSE)
+  } else {
+    stop("formulation must be 1, 2, 3 or 4")
+  }
+}
+
+getMaxAmountFromPast <-function(regimen, fit) {
+  fixedRegimen <- regimen %>%
+    dplyr::filter(FIX)
+
+  if(nrow(fixedRegimen)==0) {
+    return(3000)
+  }
+
+  normalisedAmounts <- purrr::pmap_dbl(list(fixedRegimen$AMT, fixedRegimen$FORM), function(amt, form) {
+    formulation <- tdmore::getMetadataByName(fit$tdmore, form)
+    if (isAdvagraf(form)) {
+      return(amt/2)
+    } else {
+      return(amt)
+    }
+  })
+  return(max(normalisedAmounts))
+}
+
 #' @describeIn doseSimulation Optimize the regimen, using the metadata defined by the model
 #'
 #' This performs a step-wise optimization of multiple doses.
@@ -18,6 +47,7 @@ findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL) {
   # stopifnot( is.integer(smoother) && smoother >= 0L )
 
   doseCap <- 9000
+  ff <- 1.5
   obsConc <- fit$observed$CONC
 
   # Retrieving the last observed concentration
@@ -67,17 +97,20 @@ findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL) {
   for(i in seq_along(target$TIME)) {
     row <- target[i, ]
     iterationRows <- which( regimen$FIX == FALSE & regimen$TIME < row$TIME & !modified )
+    maxAllowedAmount <- getMaxAmountFromPast(regimen=regimen, fit=fit)*ff
+    if(maxAllowedAmount > doseCap) {
+      maxAllowedAmount <- doseCap # Cannot exceed dose cap
+    }
     if(length(iterationRows) == 0) next
     rec <- findDose(fit, regimen, iterationRows, target=row)
     regimen <- rec$regimen
+
     roundedAmt <- purrr::pmap_dbl(list(regimen$AMT, regimen$FORM), function(amt, form) {
       formulation <- tdmore::getMetadataByName(fit$tdmore, form)
-      if (form %in% c("3")) {
-        doseCap_ <- doseCap*2
-      } else if (form %in% c("1", "2", "4")) {
-        doseCap_ <- doseCap
+      if (isAdvagraf(form)) {
+        doseCap_ <- formulation$round_function(min(doseCap*2, maxAllowedAmount*2))
       } else {
-        stop("formulation must be 1, 2, 3 or 4")
+        doseCap_ <- formulation$round_function(min(doseCap, maxAllowedAmount))
       }
       retValue <- formulation$round_function(amt)
       if (retValue > doseCap_) {
