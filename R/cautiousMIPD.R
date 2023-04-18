@@ -1,12 +1,8 @@
 
 isAdvagraf <- function(form) {
-  if (form %in% c("3")) {
-    return(TRUE)
-  } else if (form %in% c("1", "2", "4")) {
-    return(FALSE)
-  } else {
-    stop("formulation must be 1, 2, 3 or 4")
-  }
+  values <- c("1", "2", "3", "4")
+  if (!all(form %in% values)) stop("formulation must be 1, 2, 3 or 4")
+  return(form %in% c("3"))
 }
 
 getMaxAmountFromPast <-function(regimen, fit) {
@@ -102,7 +98,12 @@ findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL) {
       maxAllowedAmount <- doseCap # Cannot exceed dose cap
     }
     if(length(iterationRows) == 0) next
-    rec <- findDose(fit, regimen, iterationRows, target=row)
+    # browser()
+    # Add WEIGHT column for Advagraf
+    regimen <- regimen %>%
+      dplyr::mutate(WEIGHT=dplyr::if_else(isAdvagraf(FORM), 2, 1))
+
+    rec <- findDose(fit=fit, regimen=regimen, doseRows=iterationRows, weightForm=TRUE, target=row)
     regimen <- rec$regimen
 
     roundedAmt <- purrr::pmap_dbl(list(regimen$AMT, regimen$FORM), function(amt, form) {

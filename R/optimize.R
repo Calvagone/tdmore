@@ -3,6 +3,7 @@
 #' @param fit the tdmorefit object
 #' @param regimen the regimen
 #' @param doseRows which rows of the regimen to adapt when searching for a new dose, or NULL to take the last one
+#' @param weightForm weight AMT according to formulation, logical value. Requires numeric column 'WEIGHT' in regimen.
 #' @param interval which interval to search a dose in. Defaults to a ridiculously high range
 #' @param target target value, as a data.frame
 #' @param se.fit TRUE to provide a confidence interval on the dose prediction, adding columns dose.median, dose.lower and dose.upper
@@ -13,7 +14,7 @@
 #' @return a recommendation object
 #' @export
 #' @importFrom stats uniroot
-findDose <- function(fit, regimen=fit$regimen, doseRows=NULL, interval=c(0, 1E10), target, se.fit = FALSE, level = 0.95, mc.maxpts = 100, ...) {
+findDose <- function(fit, regimen=fit$regimen, doseRows=NULL, weightForm=FALSE, interval=c(0, 1E10), target, se.fit = FALSE, level = 0.95, mc.maxpts = 100, ...) {
   # Check if IOV is present in model
   iov <- fit$tdmore$iov
   if(is.null(doseRows))
@@ -29,14 +30,14 @@ findDose <- function(fit, regimen=fit$regimen, doseRows=NULL, interval=c(0, 1E10
   if (!se.fit) {
     # Find the best dose for the estimated parameters
     rootFunction <- function(AMT) {
-      myRegimen <- updateRegimen(regimen = regimen, doseRows = doseRows, newDose = AMT)
+      myRegimen <- updateRegimen(regimen = regimen, doseRows = doseRows, newDose = AMT, weightForm=weightForm)
       obs <- stats::predict(fit, newdata = target, regimen = myRegimen)
       result <- obs[, colnames(obs) != "TIME", drop=TRUE] - target[, colnames(target) != "TIME", drop=TRUE]
       if(length(result) > 1) stop("Cannot use findDose to hit multiple targets!")
       result
     }
     result <- runUniroot(rootFunction, interval, ...)
-    return(convertResultToRecommendation(fit, result, regimen, doseRows, target))
+    return(convertResultToRecommendation(tdmorefit=fit, result=result, regimen=regimen, doseRows=doseRows, weightForm=weightForm, target=target))
 
   } else {
     # Find the dose for each Monte-Carlo sample
@@ -48,7 +49,7 @@ findDose <- function(fit, regimen=fit$regimen, doseRows=NULL, interval=c(0, 1E10
       names(res) <- names(coef(fit))
 
       mcRootFunction <- function(AMT) {
-        myRegimen <- updateRegimen(regimen = regimen, doseRows = doseRows, newDose = AMT)
+        myRegimen <- updateRegimen(regimen = regimen, doseRows = doseRows, newDose = AMT, weightForm=weightForm)
         obs <- stats::predict(object = fit$tdmore, newdata = target, regimen = myRegimen, parameters = res, covariates = fit$covariates)
         obs[, colnames(obs) != "TIME", drop=TRUE] - target[, colnames(target) != "TIME", drop=TRUE]
       }
@@ -56,7 +57,7 @@ findDose <- function(fit, regimen=fit$regimen, doseRows=NULL, interval=c(0, 1E10
       runUniroot(mcRootFunction, interval, ...)
     })
 
-    return(convertMCResultToRecommendation(fit, mc, result, regimen, doseRows, target, level))
+    return(convertMCResultToRecommendation(tdmorefit=fit, mc=mc, result=result, regimen=regimen, doseRows=doseRows, weightForm=weightForm, target=target, level=level))
   }
 }
 
@@ -86,12 +87,13 @@ runUniroot <- function(rootFunction, interval, ...) {
 #' @param result the uniroot result
 #' @param regimen the regimen
 #' @param doseRows which rows of the regimen to adapt when searching for a new dose, or NULL to take the last one
+#' @param weightForm weight AMT according to formulation, logical value. Requires numeric column 'WEIGHT' in regimen.
 #' @param target the original target
 #'
 #' @return a recommendation object
 #' @keywords internal
 #' @noRd
-convertResultToRecommendation <- function(tdmorefit, result, regimen, doseRows, target) {
+convertResultToRecommendation <- function(tdmorefit, result, regimen, doseRows, weightForm, target) {
   return(structure(
     list(
       tdmorefit=tdmorefit,
@@ -99,7 +101,8 @@ convertResultToRecommendation <- function(tdmorefit, result, regimen, doseRows, 
       regimen = updateRegimen(
         regimen = regimen,
         doseRows = doseRows,
-        newDose = result$root
+        newDose = result$root,
+        weightForm=weightForm
       ),
       target=target,
       result = list(result)
@@ -114,6 +117,7 @@ convertResultToRecommendation <- function(tdmorefit, result, regimen, doseRows, 
 #' @param result list with uniroot results
 #' @param regimen the regimen
 #' @param doseRows which rows of the regimen to adapt when searching for a new dose, or NULL to take the last one
+#' @param weightForm weight AMT according to formulation, logical value. Requires numeric column 'WEIGHT' in regimen.
 #' @param target the original target
 #' @param level the confidence interval on the dose
 #'
@@ -121,7 +125,7 @@ convertResultToRecommendation <- function(tdmorefit, result, regimen, doseRows, 
 #' @importFrom dplyr summarise
 #' @keywords internal
 #' @noRd
-convertMCResultToRecommendation <- function(tdmorefit, mc, result, regimen, doseRows, target, level) {
+convertMCResultToRecommendation <- function(tdmorefit, mc, result, regimen, doseRows, weightForm, target, level) {
   doses <- purrr::map_dbl(result, ~.x$root)
 
   ciLevel <- (1-level)/2
@@ -137,7 +141,8 @@ convertMCResultToRecommendation <- function(tdmorefit, mc, result, regimen, dose
       regimen = updateRegimen(
         regimen = regimen,
         doseRows = doseRows,
-        newDose = dose['dose.median']
+        newDose = dose['dose.median'],
+        weightForm=weightForm
       ),
       result=result,
       target=target
@@ -155,17 +160,26 @@ as.double.recommendation <- function(x, ...) {
 #' @param regimen the regimen to update
 #' @param doseRows which rows of the regimen to adapt, if not specified, the last dose will be adapted
 #' @param newDose the specified new dose
+#' @param weightForm
 #'
 #' @return the updated regimen
 #' @noRd
-updateRegimen <- function(regimen, doseRows = NULL, newDose) {
-  if (is.null(doseRows))
-    doseRows <- nrow(regimen)
+updateRegimen <- function(regimen, doseRows = NULL, newDose, weightForm=FALSE) {
+  if (is.null(doseRows)) doseRows <- nrow(regimen)
 
   dose <- numeric(length = length(doseRows)) + as.numeric(newDose)
   names(dose) <- paste0(doseRows, ".AMT")
   updatedRegimen <- transformRegimen(regimen, dose)
 
+  if (weightForm) {
+    if (!"WEIGHT" %in% colnames(updatedRegimen)) {
+      stop("Column 'WEIGHT' not found in regimen but is needed since 'weightForm' is TRUE")
+    }
+    updatedRegimen <- updatedRegimen %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate(AMT=dplyr::if_else(dplyr::row_number() %in% doseRows, AMT*WEIGHT, AMT)) %>%
+      dplyr::select(-dplyr::all_of("WEIGHT"))
+  }
   return(updatedRegimen)
 }
 
@@ -284,7 +298,7 @@ findDoses <- function(fit, regimen=fit$regimen, targetMetadata=NULL) {
     row <- target[i, ]
     iterationRows <- which( regimen$FIX == FALSE & regimen$TIME < row$TIME & !modified )
     if(length(iterationRows) == 0) next
-    rec <- findDose(fit, regimen, iterationRows, target=row)
+    rec <- findDose(fit=fit, regimen=regimen, doseRows=iterationRows, target=row)
     regimen <- rec$regimen
     roundedAmt <- purrr::pmap_dbl(list(regimen$AMT, regimen$FORM), function(amt, form) {
       form <- tdmore::getMetadataByName(fit$tdmore, form)

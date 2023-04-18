@@ -14,6 +14,7 @@ findDose(
   fit,
   regimen = fit$regimen,
   doseRows = NULL,
+  weightForm = FALSE,
   interval = c(0, 1e+10),
   target,
   se.fit = FALSE,
@@ -46,6 +47,8 @@ doseSimulation(
 \item{targetMetadata}{defined target troughs as list(min=X, max=Y). If NULL or all NA, taken from the model metadata.}
 
 \item{doseRows}{which rows of the regimen to adapt when searching for a new dose, or NULL to take the last one}
+
+\item{weightForm}{weight AMT according to formulation, logical value. Requires numeric column 'WEIGHT' in regimen.}
 
 \item{interval}{which interval to search a dose in. Defaults to a ridiculously high range}
 
