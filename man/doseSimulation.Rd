@@ -12,8 +12,9 @@ findDosesCautiously(
   fit,
   regimen = fit$regimen,
   targetMetadata = NULL,
-  doseCap,
-  foldFactor
+  span,
+  cap,
+  ff
 )
 
 findDose(
@@ -52,9 +53,11 @@ doseSimulation(
 
 \item{targetMetadata}{defined target troughs as list(min=X, max=Y). If NULL or all NA, taken from the model metadata.}
 
-\item{doseCap}{dose cap that cannot be exceeded (unit: prograf dose)}
+\item{span}{user-given time span (in hours) in which cautious dosing is applied}
 
-\item{foldFactor}{fold factor threshold (recommended doses compared with max dose already given)}
+\item{cap}{dose cap that cannot be exceeded (unit: prograf dose)}
+
+\item{ff}{fold factor threshold (recommended doses compared with max dose already given)}
 
 \item{doseRows}{which rows of the regimen to adapt when searching for a new dose, or NULL to take the last one}
 

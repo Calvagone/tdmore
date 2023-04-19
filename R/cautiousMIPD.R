@@ -31,10 +31,11 @@ getMaxAmountFromPast <-function(regimen, fit) {
 #' @param fit tdmorefit object
 #' @param regimen the treatment regimen to optimize
 #' @param targetMetadata defined target troughs as list(min=X, max=Y). If NULL or all NA, taken from the model metadata.
-#' @param doseCap dose cap that cannot be exceeded (unit: prograf dose)
-#' @param foldFactor fold factor threshold (recommended doses compared with max dose already given)
+#' @param span user-given time span (in hours) in which cautious dosing is applied
+#' @param cap dose cap that cannot be exceeded (unit: prograf dose)
+#' @param ff fold factor threshold (recommended doses compared with max dose already given)
 #' @export
-findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, doseCap, foldFactor) {
+findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, span, cap, ff) {
   if(! "FIX" %in% colnames(regimen) ) regimen$FIX <- FALSE
   if(is.null(targetMetadata) || all(is.na(targetMetadata))) {
     targetMetadata <- tdmore::getMetadataByClass(fit$tdmore, "tdmore_target")
@@ -51,34 +52,18 @@ findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, d
   # Retrieving the last observed concentration
   lastConc <- obsConc[obsConc %>% length()]
 
-  if (lastConc < targetValue) {
-    # smoother <- 0L # target=morning dose trough of current occasion
-    smoother <- 1L   # target=morning dose trough of next occasion
-  } else {
-    smoother <- NULL # Free-style
-  }
+  # Getting list of troughs
+  unfixRegimen <- regimen[regimen$FIX==FALSE, ]
+  target <- list(
+    TIME=getTroughs(fit$tdmore, unfixRegimen, adj=TRUE)
+  )
 
-  # Unfixed part of regimen
-  unfixedRegimen <- regimen %>%
-    dplyr::mutate(ROW_NO=dplyr::row_number()) %>%
-    dplyr::filter(!FIX)
-
-  if (nrow(unfixedRegimen) > 0 && !is.null(smoother)) {
-    currentOcc <- unfixedRegimen %>% dplyr::pull(OCC) %>% dplyr::first()
-    occasions <- unfixedRegimen$OCC
-    # Find latest occasion available from data
-    for (occ in (((0:smoother) + currentOcc) %>% rev())) {
-      if (occ %in% occasions) break
-    }
-    rowNumber <- unfixedRegimen %>%
-      dplyr::filter(OCC==occ) %>%
-      dplyr::pull(ROW_NO) %>% dplyr::last()
+  # Apply cautious dosing if last concentration is lower than the target value
+  if (lastConc < targetValue && nrow(unfixRegimen) > 0 && length(target$TIME) > 0) {
+    targetedTime <- unfixRegimen$TIME[[1]] + span
+    # Overwrite target by finding the closest trough value to the targeted time
     target <- list(
-      TIME=getTroughs(fit$tdmore, regimen[rowNumber, ], adj=TRUE)
-    )
-  } else {
-    target <- list(
-      TIME=getTroughs(fit$tdmore, regimen[regimen$FIX==FALSE, ], adj=TRUE)
+      TIME=target$TIME[which.min(abs(target$TIME - targetedTime))]
     )
   }
 
@@ -93,9 +78,9 @@ findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, d
   for(i in seq_along(target$TIME)) {
     row <- target[i, ]
     iterationRows <- which( regimen$FIX == FALSE & regimen$TIME < row$TIME & !modified )
-    maxAllowedAmount <- getMaxAmountFromPast(regimen=regimen, fit=fit)*foldFactor
-    if(maxAllowedAmount > doseCap) {
-      maxAllowedAmount <- doseCap # Cannot exceed dose cap
+    maxAllowedAmount <- getMaxAmountFromPast(regimen=regimen, fit=fit)*ff
+    if(maxAllowedAmount > cap) {
+      maxAllowedAmount <- cap # Cannot exceed dose cap
     }
     if(length(iterationRows) == 0) next
     # browser()
@@ -109,9 +94,9 @@ findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, d
     roundedAmt <- purrr::pmap_dbl(list(regimen$AMT, regimen$FORM), function(amt, form) {
       formulation <- tdmore::getMetadataByName(fit$tdmore, form)
       if (isAdvagraf(form)) {
-        doseCap_ <- formulation$round_function(min(doseCap*2, maxAllowedAmount*2))
+        doseCap_ <- formulation$round_function(min(cap*2, maxAllowedAmount*2))
       } else {
-        doseCap_ <- formulation$round_function(min(doseCap, maxAllowedAmount))
+        doseCap_ <- formulation$round_function(min(cap, maxAllowedAmount))
       }
       retValue <- formulation$round_function(amt)
       if (retValue > doseCap_) {
