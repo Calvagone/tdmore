@@ -30,12 +30,13 @@ getMaxAmountFromPast <-function(regimen, fit, min_dose) {
 #' @param fit tdmorefit object
 #' @param regimen the treatment regimen to optimize
 #' @param targetMetadata defined target troughs as list(min=X, max=Y). If NULL or all NA, taken from the model metadata.
+#' @param cautious cautious mode, default is TRUE (=enabled). FALSE will disable the cautious mode.
 #' @param span user-given time span (in hours) in which cautious dosing is applied
 #' @param cap dose cap that cannot be exceeded (unit: prograf dose)
 #' @param ff fold factor threshold (recommended doses compared with max dose already given)
 #' @param ff_min_dose min dose to use together with the fold factor check
 #' @export
-findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, span, cap, ff, ff_min_dose=3) {
+findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, cautious=TRUE, span, cap, ff, ff_min_dose=3) {
   if(! "FIX" %in% colnames(regimen) ) regimen$FIX <- FALSE
   if(is.null(targetMetadata) || all(is.na(targetMetadata))) {
     targetMetadata <- tdmore::getMetadataByClass(fit$tdmore, "tdmore_target")
@@ -47,11 +48,6 @@ findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, s
   targetValue <- mean( c(targetMetadata$min, targetMetadata$max) )
   if(is.na(targetValue)) stop("Target not defined, cannot optimize treatment...")
 
-  obsConc <- fit$observed$CONC
-
-  # Retrieving the last observed concentration
-  lastConc <- obsConc[obsConc %>% length()]
-
   # Getting list of troughs
   unfixRegimen <- regimen[regimen$FIX==FALSE, ]
   target <- list(
@@ -59,7 +55,7 @@ findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, s
   )
 
   # Apply cautious dosing if last concentration is lower than the target value
-  if (lastConc < targetValue && nrow(unfixRegimen) > 0 && length(target$TIME) > 0) {
+  if (cautious && nrow(unfixRegimen) > 0 && length(target$TIME) > 0) {
     targetedTime <- unfixRegimen$TIME[[1]] + span
     # Overwrite target by finding the closest trough value to the targeted time
     target <- list(

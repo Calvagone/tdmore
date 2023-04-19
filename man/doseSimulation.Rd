@@ -12,6 +12,7 @@ findDosesCautiously(
   fit,
   regimen = fit$regimen,
   targetMetadata = NULL,
+  cautious = TRUE,
   span,
   cap,
   ff,
@@ -53,6 +54,8 @@ doseSimulation(
 \item{regimen}{the treatment regimen to optimize}
 
 \item{targetMetadata}{defined target troughs as list(min=X, max=Y). If NULL or all NA, taken from the model metadata.}
+
+\item{cautious}{cautious mode, default is TRUE (=enabled). FALSE will disable the cautious mode.}
 
 \item{span}{user-given time span (in hours) in which cautious dosing is applied}
 
