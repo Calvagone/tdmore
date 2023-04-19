@@ -14,7 +14,8 @@ findDosesCautiously(
   targetMetadata = NULL,
   span,
   cap,
-  ff
+  ff,
+  ff_min_dose = 3
 )
 
 findDose(
@@ -58,6 +59,8 @@ doseSimulation(
 \item{cap}{dose cap that cannot be exceeded (unit: prograf dose)}
 
 \item{ff}{fold factor threshold (recommended doses compared with max dose already given)}
+
+\item{ff_min_dose}{min dose to use together with the fold factor check}
 
 \item{doseRows}{which rows of the regimen to adapt when searching for a new dose, or NULL to take the last one}
 

@@ -5,16 +5,15 @@ isAdvagraf <- function(form) {
   return(form %in% c("3"))
 }
 
-getMaxAmountFromPast <-function(regimen, fit) {
+getMaxAmountFromPast <-function(regimen, fit, min_dose) {
   fixedRegimen <- regimen %>%
     dplyr::filter(FIX)
 
   if(nrow(fixedRegimen)==0) {
-    return(3000)
+    return(min_dose)
   }
 
   normalisedAmounts <- purrr::pmap_dbl(list(fixedRegimen$AMT, fixedRegimen$FORM), function(amt, form) {
-    formulation <- tdmore::getMetadataByName(fit$tdmore, form)
     if (isAdvagraf(form)) {
       return(amt/2)
     } else {
@@ -34,8 +33,9 @@ getMaxAmountFromPast <-function(regimen, fit) {
 #' @param span user-given time span (in hours) in which cautious dosing is applied
 #' @param cap dose cap that cannot be exceeded (unit: prograf dose)
 #' @param ff fold factor threshold (recommended doses compared with max dose already given)
+#' @param ff_min_dose min dose to use together with the fold factor check
 #' @export
-findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, span, cap, ff) {
+findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, span, cap, ff, ff_min_dose=3) {
   if(! "FIX" %in% colnames(regimen) ) regimen$FIX <- FALSE
   if(is.null(targetMetadata) || all(is.na(targetMetadata))) {
     targetMetadata <- tdmore::getMetadataByClass(fit$tdmore, "tdmore_target")
@@ -78,7 +78,7 @@ findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, s
   for(i in seq_along(target$TIME)) {
     row <- target[i, ]
     iterationRows <- which( regimen$FIX == FALSE & regimen$TIME < row$TIME & !modified )
-    maxAllowedAmount <- getMaxAmountFromPast(regimen=regimen, fit=fit)*ff
+    maxAllowedAmount <- getMaxAmountFromPast(regimen=regimen, fit=fit, min_dose=ff_min_dose)*ff
     if(maxAllowedAmount > cap) {
       maxAllowedAmount <- cap # Cannot exceed dose cap
     }
