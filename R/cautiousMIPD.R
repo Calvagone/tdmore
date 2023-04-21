@@ -5,12 +5,18 @@ isAdvagraf <- function(form) {
   return(form %in% c("3"))
 }
 
-getMaxAmountFromPast <-function(regimen, fit, min_dose) {
+getMaxAmountFromPast <-function(regimen, fit, min_dose, loading_dose) {
   fixedRegimen <- regimen %>%
     dplyr::filter(FIX)
 
   if(nrow(fixedRegimen)==0) {
     return(min_dose)
+  }
+
+  # Process loading dose
+  if (loading_dose) {
+    fixedRegimen <- fixedRegimen %>%
+      dplyr::mutate(AMT=dplyr::if_else(dplyr::row_number()==1, AMT/2, AMT))
   }
 
   normalisedAmounts <- purrr::pmap_dbl(list(fixedRegimen$AMT, fixedRegimen$FORM), function(amt, form) {
@@ -31,12 +37,13 @@ getMaxAmountFromPast <-function(regimen, fit, min_dose) {
 #' @param regimen the treatment regimen to optimize
 #' @param targetMetadata defined target troughs as list(min=X, max=Y). If NULL or all NA, taken from the model metadata.
 #' @param cautious cautious mode, default is TRUE (=enabled). FALSE will disable the cautious mode.
-#' @param span user-given time span (in hours) in which cautious dosing is applied
+#' @param ttt time-to-target (in hours) when cautious mode is used. Corresponds to the  time interval between the first dose to adjust and a trough concentration in the future.
 #' @param cap dose cap that cannot be exceeded (unit: prograf dose)
 #' @param ff fold factor threshold (recommended doses compared with max dose already given)
 #' @param ff_min_dose min dose to use together with the fold factor check
+#' @param ff_loading_dose loading dose is used, logical value. Default is FALSE.
 #' @export
-findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, cautious=TRUE, span, cap, ff, ff_min_dose=3) {
+findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, cautious=TRUE, ttt, cap, ff, ff_min_dose=3, ff_loading_dose=FALSE) {
   if(! "FIX" %in% colnames(regimen) ) regimen$FIX <- FALSE
   if(is.null(targetMetadata) || all(is.na(targetMetadata))) {
     targetMetadata <- tdmore::getMetadataByClass(fit$tdmore, "tdmore_target")
@@ -56,7 +63,7 @@ findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, c
 
   # Apply cautious dosing if last concentration is lower than the target value
   if (cautious && nrow(unfixRegimen) > 0 && length(target$TIME) > 0) {
-    targetedTime <- unfixRegimen$TIME[[1]] + span
+    targetedTime <- unfixRegimen$TIME[[1]] + ttt
     # Overwrite target by finding the closest trough value to the targeted time
     target <- list(
       TIME=target$TIME[which.min(abs(target$TIME - targetedTime))]
@@ -74,7 +81,7 @@ findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, c
   for(i in seq_along(target$TIME)) {
     row <- target[i, ]
     iterationRows <- which( regimen$FIX == FALSE & regimen$TIME < row$TIME & !modified )
-    maxAllowedAmount <- getMaxAmountFromPast(regimen=regimen, fit=fit, min_dose=ff_min_dose)*ff
+    maxAllowedAmount <- getMaxAmountFromPast(regimen=regimen, fit=fit, min_dose=ff_min_dose, loading_dose=ff_loading_dose)*ff
     if(maxAllowedAmount > cap) {
       maxAllowedAmount <- cap # Cannot exceed dose cap
     }

@@ -13,10 +13,11 @@ findDosesCautiously(
   regimen = fit$regimen,
   targetMetadata = NULL,
   cautious = TRUE,
-  span,
+  ttt,
   cap,
   ff,
-  ff_min_dose = 3
+  ff_min_dose = 3,
+  ff_loading_dose = FALSE
 )
 
 findDose(
@@ -57,13 +58,15 @@ doseSimulation(
 
 \item{cautious}{cautious mode, default is TRUE (=enabled). FALSE will disable the cautious mode.}
 
-\item{span}{user-given time span (in hours) in which cautious dosing is applied}
+\item{ttt}{time-to-target (in hours) when cautious mode is used. Corresponds to the  time interval between the first dose to adjust and a trough concentration in the future.}
 
 \item{cap}{dose cap that cannot be exceeded (unit: prograf dose)}
 
 \item{ff}{fold factor threshold (recommended doses compared with max dose already given)}
 
 \item{ff_min_dose}{min dose to use together with the fold factor check}
+
+\item{ff_loading_dose}{loading dose is used, logical value. Default is FALSE.}
 
 \item{doseRows}{which rows of the regimen to adapt when searching for a new dose, or NULL to take the last one}
 
