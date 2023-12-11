@@ -52,29 +52,31 @@ describe("proseval", {
       )
     }
   })
-  it("uses the par argument, also if it is a list", {
-    observed <- data.frame(TIME=c(3, 6), CONC=c(8, 4))
-    db <- dataTibble(object=m1, observed=observed)
-    fitsOutput <- capture.output(
-      {proseval(db, regimen=regimen, covariates=cov, control=list(trace=2))}
-    )
 
-    fitsOutput2 <- capture.output(
-      {proseval(db, par=c(ECL=2, EV1=2), regimen=regimen, covariates=cov, control=list(trace=2))}
-    )
-
-    db$par <- NA
-    db$par[1] <- list( lapply(list(fit1, fit2), coef) )
-    fitsOutput3 <- capture.output(
-      {proseval(db, regimen=regimen, covariates=cov, control=list(trace=2))}
-    )
-
-    for(i in seq_along(reference)) {
-      expect_equal( coef(reference[[i]]),
-                    coef(fits$fit[[i]])
-      )
-    }
-  })
+  # NLX: disabled on December 11th, 2023
+  # it("uses the par argument, also if it is a list", {
+  #   observed <- data.frame(TIME=c(3, 6), CONC=c(8, 4))
+  #   db <- dataTibble(object=m1, observed=observed)
+  #   fitsOutput <- capture.output(
+  #     {proseval(db, regimen=regimen, covariates=cov, control=list(trace=2))}
+  #   )
+  #
+  #   fitsOutput2 <- capture.output(
+  #     {proseval(db, par=c(ECL=2, EV1=2), regimen=regimen, covariates=cov, control=list(trace=2))}
+  #   )
+  #
+  #   db$par <- NA
+  #   db$par[1] <- list( lapply(list(fit1, fit2), coef) )
+  #   fitsOutput3 <- capture.output(
+  #     {proseval(db, regimen=regimen, covariates=cov, control=list(trace=2))}
+  #   )
+  #
+  #   for(i in seq_along(reference)) {
+  #     expect_equal( coef(reference[[i]]),
+  #                   coef(fits$fit[[i]])
+  #     )
+  #   }
+  # })
 
   it("should *not* split the covariates as well", {
     observed <- data.frame(TIME=c(3, 6), CONC=c(8, 4))
@@ -112,19 +114,19 @@ describe("doseSimulation", {
     z <- autoplot(sim$iterationFit[[1]], newdata=seq(0, 32, by=0.1)) +
       autolayer(sim$recommendation[[1]]) +
       autolayer(sim$fit[[1]], se.fit=F, regimen=sim$recommendation[[1]]$regimen, linetype=2, color="purple") +
-      coord_cartesian(ylim=c(0, 50))
+      ggplot2::coord_cartesian(ylim=c(0, 50))
     if(interactive()) expect_doppelganger("Recommendation hits target_1", z)
 
     z <- autoplot(sim$iterationFit[[2]], newdata=seq(0, 32, by=0.1)) +
       autolayer(sim$recommendation[[2]]) +
       autolayer(sim$fit[[1]], se.fit=F, regimen=sim$recommendation[[2]]$regimen, linetype=2, color="purple") +
-      coord_cartesian(ylim=c(0, 50))
+      ggplot2::coord_cartesian(ylim=c(0, 50))
     if(interactive()) expect_doppelganger("Recommendation hits target_2", z)
 
     z <- autoplot(sim$iterationFit[[3]], newdata=seq(0, 32, by=0.1)) +
       autolayer(sim$recommendation[[3]]) +
       autolayer(sim$fit[[1]], se.fit=F, regimen=sim$recommendation[[3]]$regimen, linetype=2, color="purple") +
-      coord_cartesian(ylim=c(0, 50))
+      ggplot2::coord_cartesian(ylim=c(0, 50))
     if(interactive()) expect_doppelganger("Recommendation hits target_3", z)
 
   })

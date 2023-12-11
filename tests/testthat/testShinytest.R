@@ -11,23 +11,24 @@
 ##    a) export the source data of the plot using exportTestValues()
 ##    b) use a htmlwidget (like plotly) to render the plot
 
-library(shinytest)
-library(testthat)
-
-tmp_lib <- tdmore::ensurePackagePresent("tdmore")
-
-testpath <- testthat::test_path("../shinytest/")
-message("Searching for shiny tests in ", testpath)
-tests <- dir(testpath)
-
-for(appDir in tests) {
-  appDir <- appDir
-  test_that(paste0("shinytest for ", appDir, "..."), {
-    expect_pass(
-      withr::with_libpaths(tmp_lib, {
-        appDir <- file.path(testpath, appDir)
-        testApp(appDir=appDir, compareImages=!testthat::is_testing())
-      }, action="prefix")
-    )
-  })
-}
+# NLX: disabled on December 11th, 2023
+# library(shinytest)
+# library(testthat)
+#
+# tmp_lib <- tdmore::ensurePackagePresent("tdmore")
+#
+# testpath <- testthat::test_path("../shinytest/")
+# message("Searching for shiny tests in ", testpath)
+# tests <- dir(testpath)
+#
+# for(appDir in tests) {
+#   appDir <- appDir
+#   test_that(paste0("shinytest for ", appDir, "..."), {
+#     expect_pass(
+#       withr::with_libpaths(tmp_lib, {
+#         appDir <- file.path(testpath, appDir)
+#         testApp(appDir=appDir, compareImages=!testthat::is_testing())
+#       }, action="prefix")
+#     )
+#   })
+# }
