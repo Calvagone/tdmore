@@ -1,5 +1,5 @@
 library(tdmore)
-nlmixr::nlmixrUI(function(){
+nlmixr2::nlmixrUI(function(){
   ini({
     TVKA <- 3.7
     TVV1 <- 61

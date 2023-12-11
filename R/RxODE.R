@@ -57,7 +57,7 @@ tdmore.RxODE <- function(model, res_var, parameters=NULL, omega=NULL, iov=NULL, 
 #' @return
 #' A list, to be used as a cache object for model_predict
 #'
-#' @importFrom RxODE eventTable rxSolve
+#' @importFrom rxode2 eventTable rxSolve
 #' @importFrom dplyr transmute left_join bind_rows arrange mutate_all
 #'
 #' @keywords internal
@@ -234,7 +234,7 @@ model_prepare.RxODE <- function(model, times, regimen=data.frame(TIME=numeric())
 #'
 #' @return
 #' A data.frame similar to the observed data frame, but with predicted values.
-#' @importFrom RxODE eventTable rxSolve
+#' @importFrom rxode2 eventTable rxSolve
 #' @importFrom dplyr transmute left_join bind_rows arrange mutate_all
 #'
 #' @keywords internal
@@ -247,7 +247,7 @@ model_predict.RxODE <- function(model, times, regimen=data.frame(TIME=numeric())
   if(!is.null( cache$output) ) return(cache$output) ## output always same, no matter the parameters
 
   # Run the simulation
-  result <- do.call(RxODE::rxSolve, c( list(object=model, returnType="data.frame", addDosing=NULL), cache$rxSolveArgs(parameters), extraArguments))
+  result <- do.call(rxode2::rxSolve, c( list(object=model, returnType="data.frame", addDosing=FALSE), cache$rxSolveArgs(parameters), extraArguments))
   names(result)[names(result)=="time"] <- "TIME"
 
   # Remove spurious sampling times due to covariates

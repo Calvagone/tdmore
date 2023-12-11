@@ -6,7 +6,7 @@ theopp$EVID <- ifelse(is.na(theopp$AMT), 0, 1)
 usethis::use_data(theopp, overwrite = TRUE)
 
 # Estimate using nlmixr
-library(nlmixr)
+library(nlmixr2)
 library(tidyverse)
 modelCode <- function() {
   ini({
@@ -34,7 +34,7 @@ modelCode <- function() {
 }
 
 
-result <- theopp %>% rename(DV=CONC) %>% nmDataConvert %>%
+result <- theopp %>% rename(DV=CONC) %>%
   nlmixr(modelCode, data=., est="saem")
 theopp_nlmixr <- result
 usethis::use_data(theopp_nlmixr, overwrite = TRUE)

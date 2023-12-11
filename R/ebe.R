@@ -291,11 +291,11 @@ estimate <- function(object, observed, regimen, covariates, par, fix,
     multiArg$parmat <- parmat
     multiArg$par <- NULL
     multiArg$hessian <- FALSE
-    pointEstimates <- do.call(optimr::multistart, multiArg)
+    pointEstimates <- do.call(optimx::multistart, multiArg)
     pointEstimate <- pointEstimates[ which.min(pointEstimates$value), ,drop=FALSE]
     arg$par <- unlist(pointEstimate[ 1, seq_along(par), drop=FALSE] ) ## use found 'global' optimum
   }
-  pointEstimate <- do.call(optimr::optimr, arg)
+  pointEstimate <- do.call(optimx::optimr, arg)
   res <- pointEstimate$par
   names(res) <- updatedParNames
 

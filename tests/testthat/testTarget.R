@@ -6,7 +6,7 @@ myModel <- algebraic(fun=function(t, TIME, AMT, EV) {pk1cptiv_(t=t, TIME=TIME, A
   )
 
 describe("getTroughs shifts time to ensure trough, not peak", {
-  myModel2 <- RxODE::RxODE("
+  myModel2 <- rxode2::rxode2("
   K=0.2;
   V=10 * exp(EV);
   d/dt(A1) = -K*A1;

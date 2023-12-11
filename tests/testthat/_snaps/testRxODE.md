@@ -1,6 +1,6 @@
 # doseSimulation: Simulates a dose adaptation
 
-    Structural model: RxODE 
+    Structural model: rxode2 
     Parameters: EVc ECL 
     Covariates: / 
     Output(s):
@@ -8,7 +8,7 @@
 
 ---
 
-    Structural model: RxODE 
+    Structural model: rxode2 
     
     Parameters:
      name    var   cv

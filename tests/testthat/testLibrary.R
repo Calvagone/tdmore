@@ -1,9 +1,9 @@
 library(tdmore)
-library(RxODE)
+library(rxode2)
 library(testthat)
 
 solveODE <- function(model, times, TIME, AMT, II=NULL, RATE=NULL, N=200, ...) {
-  m1 <- RxODE(model)
+  m1 <- rxode2(model)
 
   if(!is.null(II)) {
     ev <- eventTable() %>% add.dosing(dose=AMT, start.time=TIME, nbr.doses=N+1, dosing.interval=II, rate=RATE) %>%
@@ -37,7 +37,7 @@ simulate_same <- function(fun, model, times, regimen, parameters) {
   m1 <- algebraic(fun)
   res1 <- tdmore:::model_predict.algebraic(m1, times=times, regimen=regimen, parameters=parameters)
 
-  m2 <- RxODE(model)
+  m2 <- rxode2(model)
   res2 <- tdmore:::model_predict.RxODE(m2, times=times, regimen=regimen, parameters=parameters, extraArguments=list( atol=1E-12, rtol=1E-12, ssAtol=1E-12, ssRtol=1E-12, maxsteps=100*1000))
 
   withCallingHandlers({

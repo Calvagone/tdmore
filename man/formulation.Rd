@@ -9,7 +9,9 @@ formulation(
   unit,
   dosing_interval = 24,
   default_value = 1,
-  round_function = function(dose) {     dose }
+  round_function = function(dose) {
+     dose
+ }
 )
 }
 \arguments{

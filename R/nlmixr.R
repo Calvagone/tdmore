@@ -56,7 +56,7 @@ tdmore.nlmixrUI <- function(model, iov=NULL, ...) {
   rxOdeModelCode <- paste(modelCode, rxodeCode, collapse = "\n")
 
   # Create RxODE object
-  rxModel <- RxODE::RxODE(rxOdeModelCode)
+  rxModel <- rxode2::rxode2(rxOdeModelCode)
 
   # Construct the TDMore object
   tdmore <- structure(list(

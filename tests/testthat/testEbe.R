@@ -1,5 +1,5 @@
 library(tdmore)
-library(nlmixr)
+library(nlmixr2)
 library(ggplot2)
 library(testthat)
 
@@ -11,7 +11,7 @@ regimen <- data.frame(
 )
 
 test_that("negative predictions should not mess up the error model", {
-  m2 <- RxODE({
+  m2 <- rxode2({
     TVKA = 3.7
     TVV1 = 61
     TVQ = 10

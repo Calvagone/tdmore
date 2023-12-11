@@ -144,19 +144,19 @@ The DoseSimulation iterates as follows:
 }
 \section{Functions}{
 \itemize{
-\item \code{findDosesCautiously}: Optimize the regimen, using the metadata defined by the model
+\item \code{findDosesCautiously()}: Optimize the regimen, using the metadata defined by the model
 
 This performs a step-wise optimization of multiple doses.
 
-\item \code{findDose}: Find the dose required to hit a target.
+\item \code{findDose()}: Find the dose required to hit a target.
 
-\item \code{getTroughs}: Automatically guesses the target troughs for a given regimen
+\item \code{getTroughs()}: Automatically guesses the target troughs for a given regimen
 
-\item \code{findDoses}: Optimize the regimen, using the metadata defined by the model
+\item \code{findDoses()}: Optimize the regimen, using the metadata defined by the model
 
 This performs a step-wise optimization of multiple doses.
+
 }}
-
 \examples{
 library(dplyr)
 library(ggplot2)

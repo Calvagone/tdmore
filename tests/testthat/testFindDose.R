@@ -1,6 +1,6 @@
 library(tdmore)
-library(RxODE)
-library(nlmixr)
+library(rxode2)
+library(nlmixr2)
 library(ggplot2)
 library(testthat)
 
@@ -80,7 +80,7 @@ describe("findDose works correctly", {
       dose.median = 224.8,
       dose.lower = 100,
       dose.upper = 775.8
-    ), tolerance=0.5) ## high tolerance, even new RxODE versions result in different values...
+    ), tolerance=0.5) ## high tolerance, even new rxode2 versions result in different values...
   })
 
   it("updateRegimen works correctly", {

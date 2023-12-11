@@ -1,7 +1,7 @@
-library(nlmixr)
+library(nlmixr2)
 library(tdmore)
 library(testthat)
-library(RxODE)
+library(rxode2)
 library(dplyr)
 
 expect_not_equal <- function(a, b) {

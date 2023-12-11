@@ -1,7 +1,7 @@
 ## Goal: to validate tdmore vs. nlmixr posthoc estimation
 
-library(RxODE)
-library(nlmixr)
+library(rxode2)
+library(nlmixr2)
 library(tdmore)
 library(dplyr)
 library(ggplot2)
@@ -32,7 +32,7 @@ describe("nlmixr and tdmore give same results", {
       Cp ~ add(add.sd)
     })
   }
-  ## XXX: linCmt() does not work when generating an RxODE-style model...
+  ## XXX: linCmt() does not work when generating an rxode2-style model...
 
   file <- testthat::test_path("ref/theo_sd_nlmixr.RDs")
   if(file.exists(file)) {

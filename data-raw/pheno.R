@@ -9,7 +9,7 @@ usethis::use_data(pheno, overwrite = TRUE)
 
 
 # Estimate using nlmixr
-library(nlmixr)
+library(nlmixr2)
 library(tidyverse)
 modelCode <- function() {
   ini({

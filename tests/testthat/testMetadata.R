@@ -1,5 +1,5 @@
 library(tdmore)
-library(nlmixr)
+library(nlmixr2)
 library(testthat)
 library(magrittr)
 

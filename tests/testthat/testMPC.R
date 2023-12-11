@@ -1,12 +1,12 @@
 library(tdmore)
-library(nlmixr)
+library(nlmixr2)
 library(testthat)
 library(dplyr)
 library(ggplot2)
 
 # Comparison with EBE -----------------------------------------------------
 theta <-  c(TVCL= 3.7,TVV1 =61)
-m1_rxOde <- nlmixrUI(function(){
+m1_rxode2 <- nlmixrUI(function(){
   ini({
     TVKA <- 3.7
     TVQ <- 10
@@ -35,7 +35,7 @@ m1_rxOde <- nlmixrUI(function(){
   })
 })
 
-m1 <- m1_rxOde %>% tdmore()
+m1 <- m1_rxode2 %>% tdmore()
 covariates <- c(WT=70)
 regimen <- tibble(
   TIME=seq(0, 15*2)*12+8,
@@ -88,7 +88,7 @@ describe("Classical EBE", {
   })
 })
 
-m1_iov <- m1_rxOde %>% tdmore(iov=c("EV1", "ECL"))
+m1_iov <- m1_rxode2 %>% tdmore(iov=c("EV1", "ECL"))
 ipredEbe <- tdmore:::estimate(m1_iov,
                      observed=filter(observed, TIME < 120),
                      regimen=filter(regimen, TIME<120), #performance optimization

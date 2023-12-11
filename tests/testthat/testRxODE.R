@@ -1,6 +1,6 @@
 library(tdmore)
 library(testthat)
-library(RxODE)
+library(rxode2)
 library(magrittr)
 
 modelCode <- "
@@ -20,7 +20,7 @@ d/dt(centr) = ka*abs - k12*centr + k21*perip - ke*centr;
 d/dt(perip) = k12*centr - k21*perip;
 "
 omegas=c(EVc=0.19^2, ECL=0.28^2)
-m1 <- RxODE::RxODE(modelCode)
+m1 <- rxode2::rxode2(modelCode)
 tdmore <- m1 %>%
   tdmore(omega=omegas,
          res_var=list(errorModel("CONC", prop=0.23))) #Model has 23% proportional error
@@ -66,7 +66,7 @@ expect_snapshot_value(
   "serialize"
 )
 
-## RxODE throws an error 'ii requires non zero additional doses'
+## rxode2 throws an error 'ii requires non zero additional doses'
 ## but tdmore does support this treatment regimen,
 ## as it is useful to plan e.g. additional doses
 predict(as.population(tdmore), newdata=seq(0, 14), regimen=data.frame(TIME=0, AMT=100, II=12))
