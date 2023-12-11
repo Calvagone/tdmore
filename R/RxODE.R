@@ -14,7 +14,7 @@
 #' @export
 #'
 #' @example inst/examples/RxODE.R
-tdmore.RxODE <- function(model, res_var, parameters=NULL, omega=NULL, iov=NULL, ...) {
+tdmore.rxode2 <- function(model, res_var, parameters=NULL, omega=NULL, iov=NULL, ...) {
   if(is.null(parameters)) {
     # try to guess using the omega matrix
     if(!is.null(names(omega)) ) parameters <- names(omega)
@@ -62,7 +62,7 @@ tdmore.RxODE <- function(model, res_var, parameters=NULL, omega=NULL, iov=NULL, 
 #'
 #' @keywords internal
 #' @noRd
-model_prepare.RxODE <- function(model, times, regimen=data.frame(TIME=numeric()), parameters=numeric(), covariates=NULL, iov=NULL, extraArguments=list()) {
+model_prepare.rxode2 <- function(model, times, regimen=data.frame(TIME=numeric()), parameters=numeric(), covariates=NULL, iov=NULL, extraArguments=list()) {
   modVars <- model$get.modelVars()
   # RxODE does not allow to simulate 'nothing'
   # Manually construct an empty data.frame with the right columns
@@ -239,7 +239,7 @@ model_prepare.RxODE <- function(model, times, regimen=data.frame(TIME=numeric())
 #'
 #' @keywords internal
 #' @noRd
-model_predict.RxODE <- function(model, times, regimen=data.frame(TIME=numeric()), parameters=numeric(), covariates=NULL, iov=NULL, extraArguments=list(), cache=NULL) {
+model_predict.rxode2 <- function(model, times, regimen=data.frame(TIME=numeric()), parameters=numeric(), covariates=NULL, iov=NULL, extraArguments=list(), cache=NULL) {
   if(is.null(cache)) {
     cache <- model_prepare(model, times, regimen, parameters, covariates, iov, extraArguments)
   }

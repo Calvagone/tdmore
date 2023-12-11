@@ -55,7 +55,7 @@ checkErrorModel <- function(tdmore) {
     stopifnot(is.numeric(add))
     stopifnot(is.numeric(prop))
 
-    if (inherits(tdmore$model, "RxODE")) {
+    if (inherits(tdmore$model, "rxode2")) {
       modVars <- tdmore$model$get.modelVars()
       if(! errorModel$var %in% c(modVars$lhs, modVars$state))
                   stop(paste0("Error model variable `", errorModel$var, "' is not predicted by the model"))
@@ -76,7 +76,7 @@ checkModel <- function(tdmore) {
   model <- tdmore$model
   covariates <- tdmore$covariates
 
-  if (inherits(model, "RxODE")) {
+  if (inherits(model, "rxode2")) {
     # Check that parameters + covariates together supplies the parameters needed for the model
     modVars <- model$get.modelVars()
     rxParams <- modVars$params

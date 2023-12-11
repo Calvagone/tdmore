@@ -2,12 +2,12 @@
 % Please edit documentation in R/RxODE.R, R/model.R, R/nlmixr.R
 \name{tdmore}
 \alias{tdmore}
-\alias{tdmore.RxODE}
+\alias{tdmore.rxode2}
 \alias{tdmore.nlmixrUI}
 \alias{tdmore.nlmixrFitCore}
 \title{Append TDM functionality to a pharmacometrics structural model.}
 \usage{
-\method{tdmore}{RxODE}(model, res_var, parameters = NULL, omega = NULL, iov = NULL, ...)
+\method{tdmore}{rxode2}(model, res_var, parameters = NULL, omega = NULL, iov = NULL, ...)
 
 tdmore(model, ...)
 

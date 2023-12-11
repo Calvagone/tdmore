@@ -1,3 +1,4 @@
+library(ggplot2)
 
 myFunction <- function(t, A0, A1, TIME, AMT, EKA, EV, ECL, WT) {
   V = 70 * exp(EV) * WT/70

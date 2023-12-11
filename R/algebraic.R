@@ -64,8 +64,7 @@ algebraic <- function(fun, inits=NULL, na.rm=TRUE) {
 #' @return
 #' A data.frame containing all output of the prediction function of the algebraic model
 #'
-#' @engine
-#' @keywords internal
+#' @export
 model_predict.algebraic <- function(model, times, regimen=NULL, parameters=numeric(), covariates=NULL, iov=NULL, extraArguments=list(), cache=NULL) {
   if(is.null(regimen)){
     regimen <- data.frame(TIME=numeric(), AMT=numeric())
