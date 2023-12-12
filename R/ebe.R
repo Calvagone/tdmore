@@ -122,7 +122,7 @@ estimate <- function(object, observed, regimen, covariates, par, fix,
                              method="L-BFGS-B", se.fit=TRUE,
                              lower=NA, upper=NA,
                              multistart=F,
-                             control=list(trace=getOption("tdmore.trace", default=(!testthat::is_testing()&interactive())*1), REPORT=10, factr=1e13),
+                             control=list(),
                              ...,
                              .progress=NULL, .mpc=TRUE) {
   if(missing(observed)) observed <- NULL
@@ -242,8 +242,7 @@ estimate <- function(object, observed, regimen, covariates, par, fix,
   omegaChol <- Matrix::chol(omega)
 
   # NLUY: fix me later
-  se.fit <- FALSE # Temporarily disable because hessian not working in optimx
-  control <- NULL # # Control can't be there with default method L-BFGS-B
+  se.fit <- FALSE # Temporarily disable because hessian currently not working in optimx
 
   # Then do the full optimisation
   arg <- list(
