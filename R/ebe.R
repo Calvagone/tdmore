@@ -241,6 +241,10 @@ estimate <- function(object, observed, regimen, covariates, par, fix,
 
   omegaChol <- Matrix::chol(omega)
 
+  # NLUY: fix me later
+  se.fit <- FALSE # Temporarily disable because hessian not working in optimx
+  control <- NULL # # Control can't be there with default method L-BFGS-B
+
   # Then do the full optimisation
   arg <- list(
     par = par,
@@ -256,8 +260,7 @@ estimate <- function(object, observed, regimen, covariates, par, fix,
     isChol=TRUE,
     omega=omegaChol,
     fix=fix,
-    control=control,
-    ...
+    control=control
   )
   if(nrow(observed)==0) {
     control <- c(list(maxit=0), control) #no iterations, just use default!
@@ -296,6 +299,7 @@ estimate <- function(object, observed, regimen, covariates, par, fix,
     arg$par <- unlist(pointEstimate[ 1, seq_along(par), drop=FALSE] ) ## use found 'global' optimum
   }
   pointEstimate <- do.call(optimx::optimr, arg)
+
   res <- pointEstimate$par
   names(res) <- updatedParNames
 
