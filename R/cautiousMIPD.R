@@ -5,7 +5,7 @@ isAdvagraf <- function(form) {
   return(form %in% c("3"))
 }
 
-getMaxAmountFromPast <-function(regimen, fit, min_dose, loading_dose) {
+getMaxAmountFromPast <- function(regimen, fit, min_dose, loading_dose) {
   fixedRegimen <- regimen %>%
     dplyr::filter(FIX)
 
@@ -19,14 +19,80 @@ getMaxAmountFromPast <-function(regimen, fit, min_dose, loading_dose) {
       dplyr::mutate(AMT=dplyr::if_else(dplyr::row_number()==1, AMT/2, AMT))
   }
 
-  normalisedAmounts <- purrr::pmap_dbl(list(fixedRegimen$AMT, fixedRegimen$FORM), function(amt, form) {
+  # Retrieve normalised amounts
+  normalisedAmounts <- getNormalisedAmounts(fixedRegimen)
+
+  return(max(normalisedAmounts))
+}
+
+getNormalisedAmounts <- function(regimen) {
+  retValue <- purrr::pmap_dbl(list(regimen$AMT, regimen$FORM), function(amt, form) {
     if (isAdvagraf(form)) {
       return(amt/2)
     } else {
       return(amt)
     }
   })
-  return(max(normalisedAmounts))
+  return(retValue)
+}
+
+getLastAmountInFuture <- function(regimen) {
+  unfixedRegimen <- regimen %>%
+    dplyr::filter(!FIX)
+
+  if (nrow(unfixedRegimen)==0) {
+    return(NULL)
+  }
+
+  # Retrieve normalized amounts, reverse vector
+  normalisedAmounts <- getNormalisedAmounts(unfixedRegimen) %>% rev()
+
+  # Return last positive amount
+  index <- which(normalisedAmounts > 0)
+  if (length(index) > 0) {
+    return(normalisedAmounts[index[1]])
+  } else {
+    return(NULL)
+  }
+}
+
+getTrailingZeroIndexes <- function(x) {
+  xRev <- rev(x)
+  xRevIndexes <- rev(seq_along(xRev))
+
+  index <- which(xRev != 0)
+  if (length(index) > 0) {
+    firstIndex <- index[1]
+    if (firstIndex > 1) {
+      indexes <- seq_len(firstIndex - 1)
+    } else {
+      indexes <- integer(0)
+    }
+  } else {
+    indexes <- xRev==0
+  }
+  return(rev(xRevIndexes[indexes]))
+}
+
+# getTrailingZeroIndexes(c(1,2,3,0,0,0,0))
+# getTrailingZeroIndexes(c(1,2,3,0,0,0,1))
+# getTrailingZeroIndexes(c(0,0,0,0,0,0,0))
+# getTrailingZeroIndexes(c(0,0,0,0,0,-9,0))
+
+fillTrailingZeroesInFuture <- function(regimen, replacement) {
+  if (nrow(regimen)==0 || is.null(replacement)) {
+    return(regimen)
+  }
+
+  indexes <- getTrailingZeroIndexes(regimen$AMT)
+
+  regimen <- regimen %>%
+    dplyr::mutate(TRAILING_ZERO=(dplyr::row_number() %in% indexes) & !FIX) %>%
+    dplyr::mutate(AMT=dplyr::if_else(TRAILING_ZERO & isAdvagraf(FORM), replacement*2, AMT)) %>%
+    dplyr::mutate(AMT=dplyr::if_else(TRAILING_ZERO & !isAdvagraf(FORM), replacement, AMT)) %>%
+    dplyr::select(-TRAILING_ZERO)
+
+  return(regimen)
 }
 
 #' @describeIn doseSimulation Optimize the regimen, using the metadata defined by the model
@@ -50,6 +116,10 @@ findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, c
     if(is.null(targetMetadata)) stop("No target defined in model metadata")
   }
   stopifnot( all( c("min", "max") %in% names(targetMetadata) ) )
+
+  # All doses in future init to 0
+  regimen <- regimen %>%
+    dplyr::mutate(AMT=dplyr::if_else(!FIX, 0, AMT))
 
   # Retrieving target value
   targetValue <- mean( c(targetMetadata$min, targetMetadata$max) )
@@ -108,6 +178,13 @@ findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, c
       return(retValue)
     })
     regimen$AMT[iterationRows] <- roundedAmt[iterationRows] # Rounded amounts only
+
+    # Filling zeroes
+    if (cautious) {
+      lastAmount <- getLastAmountInFuture(regimen=regimen)
+      regimen <- fillTrailingZeroesInFuture(regimen=regimen, replacement=lastAmount)
+    }
+
     modified[ iterationRows ] <- TRUE
     result <- c( result, rec$result )
   }
