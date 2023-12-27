@@ -32,7 +32,6 @@ proseval2(
   .prediction = "ipred",
   .elapsed = "elapsed",
   .obs = "OBS",
-  .models,
   .window
 )
 }
@@ -58,7 +57,7 @@ with that name, storing the required computation time (`System.time`) for that f
 \item{.obs}{Either a string or NULL. If a string, the output will contain a column
 with that name, describing how many observations were taken into account}
 
-\item{.models}{List of models to use per occasion (index 1=No OCC, index 2=OCC1, index 3=OCC2, etc.)}
+\item{.window}{window to look at when doing EBE step (length of window is expressed as the number of samples to keep)}
 }
 \value{
 a tibble with the requested columns for each fit
