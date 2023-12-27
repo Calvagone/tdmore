@@ -1,7 +1,7 @@
 Package: tdmore
 Type: Package
 Title: In silico evaluation of precision dosing
-Version: 1.2.0.900
+Version: 1.3.0
 Authors@R: c(
   person("Ruben", "Faelens", role = c("aut", "cre"), email = "ruben.faelens@kuleuven.be", comment=c(ORCID="0000-0002-7234-2443")),
   person("Nicolas", "Luyckx", role=c("aut", "csl")),
