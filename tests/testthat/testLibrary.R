@@ -38,7 +38,7 @@ simulate_same <- function(fun, model, times, regimen, parameters) {
   res1 <- tdmore:::model_predict.algebraic(m1, times=times, regimen=regimen, parameters=parameters)
 
   m2 <- rxode2(model)
-  res2 <- tdmore:::model_predict.RxODE(m2, times=times, regimen=regimen, parameters=parameters, extraArguments=list( atol=1E-12, rtol=1E-12, ssAtol=1E-12, ssRtol=1E-12, maxsteps=100*1000))
+  res2 <- tdmore:::model_predict.rxode2(m2, times=times, regimen=regimen, parameters=parameters, extraArguments=list( atol=1E-12, rtol=1E-12, ssAtol=1E-12, ssRtol=1E-12, maxsteps=100*1000))
 
   withCallingHandlers({
     expect_equal(
