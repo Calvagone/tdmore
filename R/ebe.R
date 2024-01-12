@@ -234,15 +234,12 @@ estimate <- function(object, observed, regimen, covariates, par, fix,
       #cat("LL calculated for ", str(par), ": ", val, "\n")
       val
     }, error = function(e) {
-      if(control$trace > 0) print(e)
+      # if(control$trace > 0) print(e)
       999999
     })
   }
 
   omegaChol <- Matrix::chol(omega)
-
-  # NLUY: fix me later
-  se.fit <- FALSE # Temporarily disable because hessian currently not working in optimx
 
   # Then do the full optimisation
   arg <- list(
@@ -251,7 +248,7 @@ estimate <- function(object, observed, regimen, covariates, par, fix,
     method = method,
     lower = lower,
     upper = upper,
-    hessian = se.fit, #only calculate the hessian if we want the vcov
+    hessian = FALSE,
     tdmore = cTdmore,
     observed = observed,
     regimen = regimen,
@@ -297,9 +294,10 @@ estimate <- function(object, observed, regimen, covariates, par, fix,
     pointEstimate <- pointEstimates[ which.min(pointEstimates$value), ,drop=FALSE]
     arg$par <- unlist(pointEstimate[ 1, seq_along(par), drop=FALSE] ) ## use found 'global' optimum
   }
+  # browser()
   pointEstimate <- do.call(optimx::optimr, arg)
 
-  res <- pointEstimate$par
+  res <- as.numeric(pointEstimate$par) # Get rid of attributes
   names(res) <- updatedParNames
 
   if(anyNA(res)) stop("Method ", method, " resulted in NA coefficients... Not returning result.")
@@ -309,6 +307,8 @@ estimate <- function(object, observed, regimen, covariates, par, fix,
   # OFIM is therefore -H/2, as we were optimizing -2*LL
   # And therefore the variance-covariance matrix is OFIM^-1
   if(se.fit) {
+
+    pointEstimate$hessian <- do.call(numDeriv::hessian, args=getHessianArguments(arg=arg, res=res))
     ## Recalculate hessian?
     H <- pointEstimate$hessian / 2 ## we were optimizing -2*LL. The OFIM is the hessian for LL
     OFIM <- H
@@ -1022,4 +1022,18 @@ as.sample <- function(x, N=100) {
   tibble(ID = seq_len(N),
          fit=result
   )
+}
+
+getHessianArguments <- function(arg, res) {
+  arg$par <- NULL
+  arg$func <- arg$fn
+  arg$fn <- NULL
+  arg$method <- "Richardson"
+  arg$lower <- NULL
+  arg$upper <- NULL
+  arg$hessian <- NULL
+  arg$control <- NULL
+  arg$method.args <- list(eps=1e-4, d=0.1, zero.tol=sqrt(.Machine$double.eps/7e-7), r=4, v=2, show.details=TRUE)
+  arg$x <- res
+  return(arg)
 }
