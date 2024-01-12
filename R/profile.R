@@ -14,7 +14,7 @@
 #' @param ... ignored
 #'
 #' @return a tdmore profile object. It namely contains a data.frame with each parameter value tested, and an additional `logLik` column with the log-likelihood for each parameter combination.
-#' @engine
+#' @export
 profile.tdmorefit <- function(fitted, fix=NULL, maxpts = 50, limits=NULL, type=c('ll', 'pop', 'pred'), .progress=TRUE,
                               ...) {
   tdmorefit <- fitted

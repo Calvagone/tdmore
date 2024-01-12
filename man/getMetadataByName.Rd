@@ -21,7 +21,7 @@ Get metadata (output, formulation or covariate) by name.
 }
 \seealso{
 Other metadata: 
-\code{\link{covariate}()},
+\code{\link{covariate}},
 \code{\link{formulation}()},
 \code{\link{getDosingInterval}()},
 \code{\link{getMetadataByClass}()},

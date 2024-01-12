@@ -1,6 +1,5 @@
 library(tdmore)
 library(rxode2)
-library(nlmixr2)
 library(ggplot2)
 library(testthat)
 

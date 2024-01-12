@@ -33,7 +33,7 @@ Create a new formulation object.
 }
 \seealso{
 Other metadata: 
-\code{\link{covariate}()},
+\code{\link{covariate}},
 \code{\link{getDosingInterval}()},
 \code{\link{getMetadataByClass}()},
 \code{\link{getMetadataByName}()},
