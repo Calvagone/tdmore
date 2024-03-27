@@ -25,6 +25,7 @@ findDose(
   regimen = fit$regimen,
   doseRows = NULL,
   weightForm = FALSE,
+  rateFun = NULL,
   interval = c(0, 1e+10),
   target,
   se.fit = FALSE,
@@ -71,6 +72,8 @@ doseSimulation(
 \item{doseRows}{which rows of the regimen to adapt when searching for a new dose, or NULL to take the last one}
 
 \item{weightForm}{weight AMT according to formulation, logical value. Requires numeric column 'WEIGHT' in regimen.}
+
+\item{rateFun}{function applied on regimen to derive the rate}
 
 \item{interval}{which interval to search a dose in. Defaults to a ridiculously high range}
 

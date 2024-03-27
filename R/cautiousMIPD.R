@@ -1,8 +1,13 @@
 
-isAdvagraf <- function(form) {
+getFormulationWeight <- function(form) {
   values <- c("1", "2", "3", "4")
   if (!all(form %in% values)) stop("formulation must be 1, 2, 3 or 4")
-  return(form %in% c("3"))
+  weight <- rep(0, length(form))
+  weight[form=="1"] <- 1
+  weight[form=="2"] <- 1
+  weight[form=="3"] <- 2
+  weight[form=="4"] <- 10 # 20% bioavailability on average
+  return(weight)
 }
 
 getMaxAmountFromPast <- function(regimen, fit, min_dose, loading_dose) {
@@ -27,11 +32,7 @@ getMaxAmountFromPast <- function(regimen, fit, min_dose, loading_dose) {
 
 getNormalisedAmounts <- function(regimen) {
   retValue <- purrr::pmap_dbl(list(regimen$AMT, regimen$FORM), function(amt, form) {
-    if (isAdvagraf(form)) {
-      return(amt/2)
-    } else {
-      return(amt)
-    }
+    return(amt/getFormulationWeight(form))
   })
   return(retValue)
 }
@@ -88,8 +89,7 @@ fillTrailingZeroesInFuture <- function(regimen, replacement) {
 
   regimen <- regimen %>%
     dplyr::mutate(TRAILING_ZERO=(dplyr::row_number() %in% indexes) & !FIX) %>%
-    dplyr::mutate(AMT=dplyr::if_else(TRAILING_ZERO & isAdvagraf(FORM), replacement*2, AMT)) %>%
-    dplyr::mutate(AMT=dplyr::if_else(TRAILING_ZERO & !isAdvagraf(FORM), replacement, AMT)) %>%
+    dplyr::mutate(AMT=dplyr::if_else(TRAILING_ZERO, replacement*getFormulationWeight(FORM), AMT)) %>%
     dplyr::select(-TRAILING_ZERO)
 
   return(regimen)
@@ -159,18 +159,18 @@ findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, c
     # browser()
     # Add WEIGHT column for Advagraf
     regimen <- regimen %>%
-      dplyr::mutate(WEIGHT=dplyr::if_else(isAdvagraf(FORM), 2, 1))
+      dplyr::mutate(WEIGHT=getFormulationWeight(FORM))
 
-    rec <- findDose(fit=fit, regimen=regimen, doseRows=iterationRows, weightForm=TRUE, target=row)
+    tacIVRateFun <-function(amt, form) {
+      return(ifelse(form=="4", amt/24*1000, 0))
+    }
+    rec <- findDose(fit=fit, regimen=regimen, doseRows=iterationRows, weightForm=TRUE, rateFun=tacIVRateFun, target=row)
+
     regimen <- rec$regimen
 
     roundedAmt <- purrr::pmap_dbl(list(regimen$AMT, regimen$FORM), function(amt, form) {
       formulation <- tdmore::getMetadataByName(fit$tdmore, form)
-      if (isAdvagraf(form)) {
-        doseCap_ <- formulation$round_function(min(cap*2, maxAllowedAmount*2))
-      } else {
-        doseCap_ <- formulation$round_function(min(cap, maxAllowedAmount))
-      }
+      doseCap_ <- formulation$round_function(min(cap*getFormulationWeight(form), maxAllowedAmount*getFormulationWeight(form)))
       retValue <- formulation$round_function(amt)
       if (retValue > doseCap_) {
         retValue <- doseCap_

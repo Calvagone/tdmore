@@ -4,6 +4,7 @@
 #' @param regimen the regimen
 #' @param doseRows which rows of the regimen to adapt when searching for a new dose, or NULL to take the last one
 #' @param weightForm weight AMT according to formulation, logical value. Requires numeric column 'WEIGHT' in regimen.
+#' @param rateFun function applied on regimen to derive the rate
 #' @param interval which interval to search a dose in. Defaults to a ridiculously high range
 #' @param target target value, as a data.frame
 #' @param se.fit TRUE to provide a confidence interval on the dose prediction, adding columns dose.median, dose.lower and dose.upper
@@ -14,7 +15,7 @@
 #' @return a recommendation object
 #' @export
 #' @importFrom stats uniroot
-findDose <- function(fit, regimen=fit$regimen, doseRows=NULL, weightForm=FALSE, interval=c(0, 1E10), target, se.fit = FALSE, level = 0.95, mc.maxpts = 100, ...) {
+findDose <- function(fit, regimen=fit$regimen, doseRows=NULL, weightForm=FALSE, rateFun=NULL, interval=c(0, 1E10), target, se.fit = FALSE, level = 0.95, mc.maxpts = 100, ...) {
   # Check if IOV is present in model
   iov <- fit$tdmore$iov
   if(is.null(doseRows))
@@ -30,7 +31,7 @@ findDose <- function(fit, regimen=fit$regimen, doseRows=NULL, weightForm=FALSE, 
   if (!se.fit) {
     # Find the best dose for the estimated parameters
     rootFunction <- function(AMT) {
-      myRegimen <- updateRegimen(regimen = regimen, doseRows = doseRows, newDose = AMT, weightForm=weightForm)
+      myRegimen <- updateRegimen(regimen = regimen, doseRows = doseRows, newDose = AMT, weightForm=weightForm, rateFun=rateFun)
       obs <- stats::predict(fit, newdata = target, regimen = myRegimen)
       result <- obs[, colnames(obs) != "TIME", drop=TRUE] - target[, colnames(target) != "TIME", drop=TRUE]
       if(length(result) > 1) stop("Cannot use findDose to hit multiple targets!")
@@ -49,7 +50,7 @@ findDose <- function(fit, regimen=fit$regimen, doseRows=NULL, weightForm=FALSE, 
       names(res) <- names(coef(fit))
 
       mcRootFunction <- function(AMT) {
-        myRegimen <- updateRegimen(regimen = regimen, doseRows = doseRows, newDose = AMT, weightForm=weightForm)
+        myRegimen <- updateRegimen(regimen = regimen, doseRows = doseRows, newDose = AMT, weightForm=weightForm, rateFun=rateFun)
         obs <- stats::predict(object = fit$tdmore, newdata = target, regimen = myRegimen, parameters = res, covariates = fit$covariates)
         obs[, colnames(obs) != "TIME", drop=TRUE] - target[, colnames(target) != "TIME", drop=TRUE]
       }
@@ -160,11 +161,12 @@ as.double.recommendation <- function(x, ...) {
 #' @param regimen the regimen to update
 #' @param doseRows which rows of the regimen to adapt, if not specified, the last dose will be adapted
 #' @param newDose the specified new dose
-#' @param weightForm
+#' @param weightForm weight amount based on formulation
+#' @param rateFun adapt rate based on given function
 #'
 #' @return the updated regimen
 #' @noRd
-updateRegimen <- function(regimen, doseRows = NULL, newDose, weightForm=FALSE) {
+updateRegimen <- function(regimen, doseRows = NULL, newDose, weightForm=FALSE, rateFun=NULL) {
   if (is.null(doseRows)) doseRows <- nrow(regimen)
 
   dose <- numeric(length = length(doseRows)) + as.numeric(newDose)
@@ -179,6 +181,11 @@ updateRegimen <- function(regimen, doseRows = NULL, newDose, weightForm=FALSE) {
       dplyr::ungroup() %>%
       dplyr::mutate(AMT=dplyr::if_else(dplyr::row_number() %in% doseRows, AMT*WEIGHT, AMT)) %>%
       dplyr::select(-dplyr::all_of("WEIGHT"))
+  }
+
+  if ("RATE" %in% colnames(updatedRegimen) && !is.null(rateFun)) {
+    updatedRegimen <- updatedRegimen %>%
+      dplyr::mutate(RATE=dplyr::if_else(dplyr::row_number() %in% doseRows, rateFun(amt=AMT, form=FORM), RATE))
   }
   return(updatedRegimen)
 }
