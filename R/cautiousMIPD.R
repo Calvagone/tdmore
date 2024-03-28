@@ -6,7 +6,7 @@ getFormulationWeight <- function(form) {
   weight[form=="1"] <- 1
   weight[form=="2"] <- 1
   weight[form=="3"] <- 2
-  weight[form=="4"] <- 10 # 20% bioavailability on average
+  weight[form=="4"] <- 0.4 # 2/5=0.4 -> 20% bioavailability on average
   return(weight)
 }
 
