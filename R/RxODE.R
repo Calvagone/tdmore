@@ -247,7 +247,7 @@ model_predict.rxode2 <- function(model, times, regimen=data.frame(TIME=numeric()
   if(!is.null( cache$output) ) return(cache$output) ## output always same, no matter the parameters
 
   # Run the simulation
-  result <- do.call(rxode2::rxSolve, c( list(object=model, returnType="data.frame", addDosing=NULL), cache$rxSolveArgs(parameters), extraArguments))
+  result <- do.call(rxode2::rxSolve, c( list(object=model, returnType="data.frame", addDosing=NULL, cores=1), cache$rxSolveArgs(parameters), extraArguments))
   names(result)[names(result)=="time"] <- "TIME"
 
   # Remove spurious sampling times due to covariates
