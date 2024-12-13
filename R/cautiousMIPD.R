@@ -80,7 +80,7 @@ getTrailingZeroIndexes <- function(x) {
 # getTrailingZeroIndexes(c(0,0,0,0,0,0,0))
 # getTrailingZeroIndexes(c(0,0,0,0,0,-9,0))
 
-fillTrailingZeroesInFuture <- function(regimen, replacement) {
+fillTrailingZeroesInFuture <- function(regimen, replacement, rateFun) {
   if (nrow(regimen)==0 || is.null(replacement)) {
     return(regimen)
   }
@@ -89,7 +89,14 @@ fillTrailingZeroesInFuture <- function(regimen, replacement) {
 
   regimen <- regimen %>%
     dplyr::mutate(TRAILING_ZERO=(dplyr::row_number() %in% indexes) & !FIX) %>%
-    dplyr::mutate(AMT=dplyr::if_else(TRAILING_ZERO, replacement*getFormulationWeight(FORM), AMT)) %>%
+    dplyr::mutate(AMT=dplyr::if_else(TRAILING_ZERO, replacement*getFormulationWeight(FORM), AMT))
+
+  if ("RATE" %in% colnames(regimen)) {
+    regimen <- regimen %>%
+      dplyr::mutate(RATE=dplyr::if_else(TRAILING_ZERO, rateFun(amt=AMT, form=FORM), RATE))
+  }
+
+  regimen <- regimen %>%
     dplyr::select(-TRAILING_ZERO)
 
   return(regimen)
@@ -168,6 +175,7 @@ findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, c
 
     regimen <- rec$regimen
 
+    # Dose rounding and dose capping
     roundedAmt <- purrr::pmap_dbl(list(regimen$AMT, regimen$FORM), function(amt, form) {
       formulation <- tdmore::getMetadataByName(fit$tdmore, form)
       doseCap_ <- formulation$round_function(min(cap*getFormulationWeight(form), maxAllowedAmount*getFormulationWeight(form)))
@@ -178,11 +186,15 @@ findDosesCautiously <- function(fit, regimen=fit$regimen, targetMetadata=NULL, c
       return(retValue)
     })
     regimen$AMT[iterationRows] <- roundedAmt[iterationRows] # Rounded amounts only
+    # Re-adjust RATE because of rounding (infusion duration=24h)
+    if ("RATE" %in% colnames(regimen)) {
+      regimen$RATE[iterationRows] <- tacIVRateFun(amt=regimen$AMT[iterationRows], form=regimen$FORM[iterationRows])
+    }
 
     # Filling zeroes
     if (cautious) {
       lastAmount <- getLastAmountInFuture(regimen=regimen)
-      regimen <- fillTrailingZeroesInFuture(regimen=regimen, replacement=lastAmount)
+      regimen <- fillTrailingZeroesInFuture(regimen=regimen, replacement=lastAmount, rateFun=tacIVRateFun)
     }
 
     modified[ iterationRows ] <- TRUE

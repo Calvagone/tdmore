@@ -38,7 +38,7 @@ findDose <- function(fit, regimen=fit$regimen, doseRows=NULL, weightForm=FALSE, 
       result
     }
     result <- runUniroot(rootFunction, interval, ...)
-    return(convertResultToRecommendation(tdmorefit=fit, result=result, regimen=regimen, doseRows=doseRows, weightForm=weightForm, target=target))
+    return(convertResultToRecommendation(tdmorefit=fit, result=result, regimen=regimen, doseRows=doseRows, weightForm=weightForm, target=target, rateFun=rateFun))
 
   } else {
     # Find the dose for each Monte-Carlo sample
@@ -58,7 +58,7 @@ findDose <- function(fit, regimen=fit$regimen, doseRows=NULL, weightForm=FALSE, 
       runUniroot(mcRootFunction, interval, ...)
     })
 
-    return(convertMCResultToRecommendation(tdmorefit=fit, mc=mc, result=result, regimen=regimen, doseRows=doseRows, weightForm=weightForm, target=target, level=level))
+    return(convertMCResultToRecommendation(tdmorefit=fit, mc=mc, result=result, regimen=regimen, doseRows=doseRows, weightForm=weightForm, target=target, level=level, rateFun=rateFun))
   }
 }
 
@@ -90,11 +90,11 @@ runUniroot <- function(rootFunction, interval, ...) {
 #' @param doseRows which rows of the regimen to adapt when searching for a new dose, or NULL to take the last one
 #' @param weightForm weight AMT according to formulation, logical value. Requires numeric column 'WEIGHT' in regimen.
 #' @param target the original target
-#'
+#' @param rateFun function applied on regimen to derive the rate
 #' @return a recommendation object
 #' @keywords internal
 #' @noRd
-convertResultToRecommendation <- function(tdmorefit, result, regimen, doseRows, weightForm, target) {
+convertResultToRecommendation <- function(tdmorefit, result, regimen, doseRows, weightForm, target, rateFun) {
   return(structure(
     list(
       tdmorefit=tdmorefit,
@@ -103,7 +103,8 @@ convertResultToRecommendation <- function(tdmorefit, result, regimen, doseRows, 
         regimen = regimen,
         doseRows = doseRows,
         newDose = result$root,
-        weightForm=weightForm
+        weightForm=weightForm,
+        rateFun=rateFun
       ),
       target=target,
       result = list(result)
@@ -121,12 +122,13 @@ convertResultToRecommendation <- function(tdmorefit, result, regimen, doseRows, 
 #' @param weightForm weight AMT according to formulation, logical value. Requires numeric column 'WEIGHT' in regimen.
 #' @param target the original target
 #' @param level the confidence interval on the dose
+#' @param rateFun function applied on regimen to derive the rate
 #'
 #' @return a recommendation object
 #' @importFrom dplyr summarise
 #' @keywords internal
 #' @noRd
-convertMCResultToRecommendation <- function(tdmorefit, mc, result, regimen, doseRows, weightForm, target, level) {
+convertMCResultToRecommendation <- function(tdmorefit, mc, result, regimen, doseRows, weightForm, target, level, rateFun) {
   doses <- purrr::map_dbl(result, ~.x$root)
 
   ciLevel <- (1-level)/2
@@ -143,7 +145,8 @@ convertMCResultToRecommendation <- function(tdmorefit, mc, result, regimen, dose
         regimen = regimen,
         doseRows = doseRows,
         newDose = dose['dose.median'],
-        weightForm=weightForm
+        weightForm=weightForm,
+        rateFun=rateFun
       ),
       result=result,
       target=target
